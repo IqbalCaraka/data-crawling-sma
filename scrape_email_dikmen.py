@@ -6,6 +6,10 @@ import os
 import json
 import signal
 import sys
+import functools
+
+# Force flush semua print supaya log langsung muncul di GitHub Actions
+print = functools.partial(print, flush=True)
 
 # ===== KONFIGURASI =====
 INPUT_CSV = "data_dikmen.csv"
