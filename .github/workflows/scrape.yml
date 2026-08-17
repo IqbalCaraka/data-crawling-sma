@@ -1,0 +1,51 @@
+name: Scrape Email Dikmen
+
+on:
+  workflow_dispatch:  # Manual trigger dari GitHub
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350  # 5 jam 50 menit (batas aman sebelum 6 jam)
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Download previous progress
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          name: scrape-hasil
+          path: .
+          search_artifacts: true
+          if_no_artifact_found: warn
+
+      - name: Show current progress
+        run: |
+          echo "=== Files ==="
+          ls -la *.csv *.json 2>/dev/null || echo "Belum ada file progress"
+          if [ -f scrape_email_progress.json ]; then
+            echo "=== Progress ==="
+            cat scrape_email_progress.json
+          fi
+
+      - name: Run scraper
+        run: python scrape_email_dikmen.py
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scrape-hasil
+          path: |
+            data_dikmen_email.csv
+            scrape_email_progress.json
+          overwrite: true
