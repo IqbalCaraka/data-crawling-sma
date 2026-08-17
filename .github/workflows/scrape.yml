@@ -1,12 +1,15 @@
 name: Scrape Email Dikmen
 
 on:
-  workflow_dispatch:  # Manual trigger dari GitHub
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 350  # 5 jam 50 menit (batas aman sebelum 6 jam)
+    timeout-minutes: 350
 
     steps:
       - name: Checkout repo
@@ -21,24 +24,27 @@ jobs:
         run: pip install requests beautifulsoup4
 
       - name: Download previous progress
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          name: scrape-hasil
-          path: .
-          search_artifacts: true
-          if_no_artifact_found: warn
-
-      - name: Show current progress
+        continue-on-error: true
         run: |
-          echo "=== Files ==="
-          ls -la *.csv *.json 2>/dev/null || echo "Belum ada file progress"
-          if [ -f scrape_email_progress.json ]; then
-            echo "=== Progress ==="
-            cat scrape_email_progress.json
-          fi
+          # Ambil progress dari branch progress jika ada
+          git fetch origin progress 2>/dev/null && \
+          git checkout origin/progress -- data_dikmen_email.csv scrape_email_progress.json 2>/dev/null && \
+          echo "Progress ditemukan, melanjutkan..." && \
+          cat scrape_email_progress.json || \
+          echo "Belum ada progress sebelumnya, mulai dari awal."
 
       - name: Run scraper
         run: python scrape_email_dikmen.py
+
+      - name: Save progress to branch
+        if: always()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git checkout -B progress
+          git add -f data_dikmen_email.csv scrape_email_progress.json 2>/dev/null
+          git commit -m "Update progress $(date '+%Y-%m-%d %H:%M')" || echo "Nothing to commit"
+          git push origin progress --force
 
       - name: Upload results
         if: always()
