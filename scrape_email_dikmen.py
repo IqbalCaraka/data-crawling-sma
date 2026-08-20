@@ -19,7 +19,7 @@ DELAY = 2             # delay antar request (detik)
 TIMEOUT = 60          # timeout per request
 MAX_RETRIES = 5       # max retry per halaman
 RETRY_DELAY = 10      # delay awal saat retry
-MAX_RUNTIME = 5 * 60 * 60  # 5 jam (batas aman GitHub Actions)
+MAX_RUNTIME = int(os.getenv("MAX_RUNTIME", 5 * 60 * 60))  # default 5 jam (batas aman GitHub Actions); set env MAX_RUNTIME utk run lokal
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
